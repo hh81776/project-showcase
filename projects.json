@@ -1,6 +1,14 @@
 [
   {
     "date": "2026-08-29",
+    "title": "StockAI 股票分析 Dashboard",
+    "description": "輸入任意股票代碼（美股或台股，如 NVDA、AAPL、TSLA、2330.TW、TSM），結合即時股價與 Claude AI 深度分析，產生完整財務、技術面、競爭分析報告；內建 FTAI、NVDA、AAPL、TSLA、MSFT、META、AMZN、2330.TW、TSM 等快速選項。AI 分析功能需自行輸入 Anthropic API Key，金鑰僅存於瀏覽器本機、不會傳送到外部伺服器。僅供研究參考，不構成投資建議。",
+    "link": "https://hh81776.github.io/stockai-dashboard/",
+    "type": "html",
+    "tag": "HTML App"
+  },
+  {
+    "date": "2026-08-29",
     "title": "美股評價系統 Stock Rater",
     "description": "輸入美股代號或公司名稱（如 AAPL、TSLA、NVDA），整合 Yahoo Finance 真實股價與 Zacks、TipRanks、Seeking Alpha、Danelfin AI、Zen Ratings、Morningstar 等多方評等，繪製 K 線圖（MA5/MA10、布林通道±1σ）；另附「Zacks Daily Rank List」，用 Yahoo Finance 篩選條件近似 Zacks Rank、科技股優先。後端以 Python + yfinance 打造，部署在雲端伺服器。僅供研究參考，不構成投資建議。",
     "link": "https://stock-rater-production.up.railway.app/",
