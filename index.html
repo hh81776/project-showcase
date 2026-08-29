@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的作品發表牆</title>
+<style>
+  :root{
+    --bg:#faf8f5;
+    --bg-card:#ffffff;
+    --text:#2b2620;
+    --text-dim:#767066;
+    --accent:#c1621f;
+    --accent-soft:#f3e2d3;
+    --line:#e6e0d6;
+    --tag-html:#2f6f4e;
+    --tag-html-bg:#e3f0e8;
+    --tag-python:#2b5f8a;
+    --tag-python-bg:#e2edf6;
+    --tag-note:#8a7a2b;
+    --tag-note-bg:#f5efdd;
+    --shadow: 0 1px 2px rgba(30,20,10,.04), 0 4px 16px rgba(30,20,10,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1b1815;
+      --bg-card:#242019;
+      --text:#ece7de;
+      --text-dim:#a39a8c;
+      --accent:#e08a45;
+      --accent-soft:#3a2c1d;
+      --line:#3a342b;
+      --tag-html:#8fd9ae;
+      --tag-html-bg:#213b2c;
+      --tag-python:#9cc7ec;
+      --tag-python-bg:#1e2f3f;
+      --tag-note:#e3d38a;
+      --tag-note-bg:#3a3421;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 20px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    line-height:1.6;
+  }
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+    padding:56px 20px 100px;
+  }
+  header{
+    margin-bottom:48px;
+  }
+  header h1{
+    font-size:1.9rem;
+    margin:0 0 8px;
+    letter-spacing:.02em;
+  }
+  header p{
+    margin:0;
+    color:var(--text-dim);
+    font-size:.98rem;
+  }
+  .meta-bar{
+    display:flex;
+    gap:16px;
+    margin-top:18px;
+    font-size:.85rem;
+    color:var(--text-dim);
+  }
+  .timeline{
+    position:relative;
+    padding-left:28px;
+  }
+  .timeline::before{
+    content:"";
+    position:absolute;
+    left:6px;
+    top:6px;
+    bottom:6px;
+    width:2px;
+    background:var(--line);
+  }
+  .item{
+    position:relative;
+    margin-bottom:34px;
+  }
+  .item::before{
+    content:"";
+    position:absolute;
+    left:-28px;
+    top:6px;
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    background:var(--accent);
+    border:2px solid var(--bg);
+    box-shadow:0 0 0 2px var(--line);
+  }
+  .card{
+    background:var(--bg-card);
+    border-radius:14px;
+    padding:18px 20px;
+    box-shadow:var(--shadow);
+  }
+  .date{
+    font-size:.78rem;
+    color:var(--text-dim);
+    margin-bottom:6px;
+    letter-spacing:.03em;
+  }
+  .title-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+  }
+  .card h2{
+    font-size:1.12rem;
+    margin:0;
+  }
+  .tag{
+    font-size:.72rem;
+    padding:2px 9px;
+    border-radius:999px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .tag.html{ color:var(--tag-html); background:var(--tag-html-bg); }
+  .tag.python{ color:var(--tag-python); background:var(--tag-python-bg); }
+  .tag.note{ color:var(--tag-note); background:var(--tag-note-bg); }
+  .card .desc{
+    color:var(--text-dim);
+    font-size:.94rem;
+    margin:0 0 12px;
+    white-space:pre-line;
+  }
+  .card a.open{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:.88rem;
+    font-weight:600;
+    color:var(--accent);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .card a.open:hover{ border-bottom-color:var(--accent); }
+  .empty, .error{
+    color:var(--text-dim);
+    padding:30px 0;
+    font-size:.95rem;
+  }
+  footer{
+    margin-top:60px;
+    color:var(--text-dim);
+    font-size:.82rem;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>我的作品發表牆</h1>
+      <p>持續更新中的 HTML 小工具與 Python 專案成果，依時間新到舊排列。</p>
+      <div class="meta-bar">
+        <span id="count-label"></span>
+        <span id="updated-label"></span>
+      </div>
+    </header>
+
+    <div class="timeline" id="timeline">
+      <div class="empty">載入中…</div>
+    </div>
+
+    <footer>由 Claude 協助建立與維護 · 每次有新作品完成即自動更新</footer>
+  </div>
+
+<script>
+async function loadProjects(){
+  const timeline = document.getElementById('timeline');
+  try{
+    const res = await fetch('./projects.json', {cache:'no-store'});
+    if(!res.ok) throw new Error('無法讀取 projects.json');
+    const items = await res.json();
+
+    if(!Array.isArray(items) || items.length === 0){
+      timeline.innerHTML = '<div class="empty">目前還沒有作品，敬請期待。</div>';
+      return;
+    }
+
+    // newest first by date string (YYYY-MM-DD sorts correctly as text)
+    items.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+
+    document.getElementById('count-label').textContent = `共 ${items.length} 筆`;
+    document.getElementById('updated-label').textContent = `最新更新：${items[0].date || ''}`;
+
+    const tagLabel = { html: 'HTML App', python: 'Python 成果', note: '公告' };
+
+    timeline.innerHTML = items.map(item => {
+      const type = item.type || 'note';
+      const label = item.tag || tagLabel[type] || '項目';
+      const hasLink = item.link && item.link.trim().length > 0;
+      return `
+        <div class="item">
+          <div class="card">
+            <div class="date">${escapeHtml(item.date || '')}</div>
+            <div class="title-row">
+              <h2>${escapeHtml(item.title || '未命名項目')}</h2>
+              <span class="tag ${escapeAttr(type)}">${escapeHtml(label)}</span>
+            </div>
+            ${item.description ? `<p class="desc">${escapeHtml(item.description)}</p>` : ''}
+            ${hasLink ? `<a class="open" href="${escapeAttr(item.link)}" target="_blank" rel="noopener noreferrer">前往查看 →</a>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }catch(err){
+    timeline.innerHTML = `<div class="error">載入失敗：${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function escapeHtml(str){
+  return String(str)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;');
+}
+function escapeAttr(str){
+  return String(str).replaceAll('"','&quot;');
+}
+
+loadProjects();
+</script>
+</body>
+</html>
