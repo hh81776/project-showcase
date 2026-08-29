@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>連鎖鞋店管理系統</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
+<style>
+:root{
+  --bg-primary:#f4f5f7; --bg-card:#ffffff; --bg-header:#1a2332;
+  --text-primary:#1f2530; --text-secondary:#6c7480; --text-on-dark:#ffffff;
+  --accent:#ff6b35; --accent-2:#2d6cdf;
+  --c1:#ff6b35; --c2:#2d6cdf; --c3:#2fb380; --c4:#c44e52; --c5:#8172b3; --c6:#c9a227;
+  --positive:#2fb380; --negative:#c44e52; --warn:#e0a11c;
+  --gap:16px; --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",Roboto,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.5;}
+.container{max-width:1400px;margin:0 auto;padding:var(--gap);}
+header.top{background:var(--bg-header);color:var(--text-on-dark);padding:20px 24px;border-radius:var(--radius);margin-bottom:var(--gap);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+header.top h1{font-size:20px;font-weight:700;}
+header.top .sub{font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px;}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;}
+.btn{background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600;}
+.btn.secondary{background:rgba(255,255,255,0.12);color:#fff;}
+.btn.small{padding:5px 10px;font-size:12px;}
+.btn.danger{background:var(--negative);}
+.btn.outline{background:transparent;border:1px solid #d0d4da;color:var(--text-primary);}
+
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;background:var(--bg-card);padding:8px;border-radius:var(--radius);margin-bottom:var(--gap);box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+nav.tabs button{background:transparent;border:none;padding:10px 16px;border-radius:8px;font-size:14px;cursor:pointer;color:var(--text-secondary);font-weight:600;}
+nav.tabs button.active{background:var(--bg-header);color:#fff;}
+
+section.page{display:none;}
+section.page.active{display:block;}
+
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--gap);margin-bottom:var(--gap);}
+.kpi-card{background:var(--bg-card);border-radius:var(--radius);padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.kpi-label{font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.kpi-value{font-size:26px;font-weight:800;}
+.kpi-change{font-size:12px;font-weight:600;margin-top:4px;}
+.kpi-change.positive{color:var(--positive);}
+.kpi-change.negative{color:var(--negative);}
+.kpi-change.neutral{color:var(--text-secondary);}
+
+.chart-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:var(--gap);margin-bottom:var(--gap);}
+.card{background:var(--bg-card);border-radius:var(--radius);padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.card h3{font-size:14px;font-weight:700;margin-bottom:14px;}
+.card canvas{max-height:300px;}
+
+.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.filters label{font-size:12px;color:var(--text-secondary);margin-right:4px;}
+.filters select,.filters input{padding:6px 10px;border:1px solid #d8dbe0;border-radius:6px;font-size:13px;background:#fff;}
+
+table.data{width:100%;border-collapse:collapse;font-size:13px;}
+table.data thead th{text-align:left;padding:10px 12px;border-bottom:2px solid #e5e7eb;color:var(--text-secondary);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;cursor:pointer;user-select:none;}
+table.data thead th:hover{color:var(--text-primary);}
+table.data tbody td{padding:9px 12px;border-bottom:1px solid #f0f1f3;white-space:nowrap;}
+table.data tbody tr:hover{background:#f8f9fb;}
+.table-wrap{overflow-x:auto;}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;}
+.badge.low{background:#fde8e8;color:var(--negative);}
+.badge.ok{background:#e6f7ef;color:var(--positive);}
+.badge.mid{background:#fdf3de;color:var(--warn);}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.section-title h2{font-size:17px;font-weight:800;}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,24,32,0.5);z-index:50;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:var(--radius);padding:22px 24px;width:420px;max-width:92vw;max-height:88vh;overflow-y:auto;}
+.modal h3{font-size:16px;margin-bottom:14px;}
+.form-row{margin-bottom:12px;}
+.form-row label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px;font-weight:600;}
+.form-row select,.form-row input{width:100%;padding:8px 10px;border:1px solid #d8dbe0;border-radius:6px;font-size:13px;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+
+.pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.footer-note{text-align:center;color:var(--text-secondary);font-size:12px;padding:16px 0;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);}
+@media (max-width:800px){.two-col{grid-template-columns:1fr;}.kpi-row{grid-template-columns:repeat(2,1fr);}}
+.hint{font-size:12px;color:var(--text-secondary);margin-bottom:10px;}
+.action-link{color:var(--accent-2);cursor:pointer;font-size:12.5px;font-weight:600;}
+.action-link.danger{color:var(--negative);}
+
+.matrix-table td.mx-cell{cursor:pointer;}
+.matrix-table td.mx-cell:hover{background:#eef2ff;}
+.mx-order{font-weight:800;}
+.mx-order.zero{color:var(--text-secondary);font-weight:600;}
+.mx-order.pos{color:var(--accent);}
+.modal.wide{width:640px;}
+.editable-num{width:70px;padding:4px 6px;border:1px solid #d8dbe0;border-radius:4px;font-size:12.5px;}
+
+.login-store-select{padding:6px 10px;border:1px solid rgba(255,255,255,0.25);border-radius:6px;background:rgba(255,255,255,0.12);color:#fff;font-size:13px;font-weight:600;}
+.login-store-select option{background:var(--bg-header);color:#fff;}
+.badge.pending{background:#fdf3de;color:var(--warn);}
+.badge.approved{background:#e6f7ef;color:var(--positive);}
+.badge.rejected{background:#fde8e8;color:var(--negative);}
+.badge.cancelled{background:#ececec;color:var(--text-secondary);}
+tr.me-row{background:#fff7f0;}
+tr.me-row td:first-child{font-weight:800;}
+
+.beta-disclaimer{background:#fff9ee;border:1px solid #f3e3c0;padding:10px 14px;border-radius:8px;line-height:1.6;}
+.badge.beta-high{background:#fde8e8;color:var(--negative);}
+.badge.beta-mid{background:#e7edfb;color:var(--accent-2);}
+.badge.beta-low{background:#e6f7ef;color:var(--positive);}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="top">
+    <div>
+      <h1>連鎖鞋店管理系統</h1>
+      <div class="sub" id="data-asof">10間門市 · 範本資料，可自行編輯</div>
+    </div>
+    <div class="toolbar">
+      <label style="font-size:12px;color:rgba(255,255,255,0.75);align-self:center;margin-right:-4px;">目前登入門市</label>
+      <select id="login-store" class="login-store-select" onchange="App.onLoginStoreChange()"></select>
+      <button class="btn secondary" onclick="App.exportData()">匯出備份 (JSON)</button>
+      <button class="btn secondary" onclick="document.getElementById('import-file').click()">匯入備份</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="App.importData(event)">
+      <button class="btn outline" onclick="App.resetData()">重置為範本資料</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="active">總覽</button>
+    <button data-tab="inventory">庫存管理</button>
+    <button data-tab="transfer">調貨管理</button>
+    <button data-tab="sales">銷售/業績報表</button>
+    <button data-tab="staff">員工/排班</button>
+    <button data-tab="finance">財務總覽</button>
+    <button data-tab="brands">品牌比較</button>
+    <button data-tab="beta">Beta分析</button>
+    <button data-tab="forecast">銷售預測</button>
+    <button data-tab="procurement">採購建議</button>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <section class="page active" id="page-overview">
+    <div class="kpi-row" id="ov-kpis"></div>
+    <div class="chart-row">
+      <div class="card"><h3>各門市營收（近12個月加總）</h3><canvas id="ov-store-revenue"></canvas></div>
+      <div class="card"><h3>品牌銷售佔比</h3><canvas id="ov-brand-share"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><h2>待補貨警示</h2><span class="hint">庫存低於安全庫存量的品項，附建議調貨門市</span></div>
+      <div class="table-wrap"><table class="data" id="ov-restock-table"></table></div>
+    </div>
+  </section>
+
+  <!-- INVENTORY -->
+  <section class="page" id="page-inventory">
+    <div class="section-title">
+      <h2>庫存管理</h2>
+      <button class="btn" onclick="Inventory.openAdd()">+ 新增/調整庫存</button>
+    </div>
+    <div class="filters">
+      <label>門市</label><select id="inv-filter-store" onchange="Inventory.render()"></select>
+      <label>品牌</label><select id="inv-filter-brand" onchange="Inventory.render()"></select>
+      <label>狀態</label>
+      <select id="inv-filter-status" onchange="Inventory.render()">
+        <option value="all">全部</option>
+        <option value="low">低於安全庫存</option>
+        <option value="ok">庫存正常</option>
+      </select>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="data" id="inv-table"></table></div>
+    </div>
+  </section>
+
+  <!-- TRANSFER -->
+  <section class="page" id="page-transfer">
+    <div class="section-title">
+      <h2>調貨管理</h2>
+      <button class="btn" onclick="Transfer.openCreate()">+ 建立調貨單</button>
+    </div>
+    <div class="hint">「目前登入門市」代表你現在所在的分店視角。切換上方選單即可模擬走到另一間店的收銀台，立即看到屬於那間店的調貨請求。</div>
+    <div class="kpi-row" id="transfer-kpis"></div>
+
+    <div class="card">
+      <div class="section-title"><h2 style="font-size:14px">跨店庫存查詢</h2></div>
+      <div class="filters">
+        <label>鞋款</label><select id="transfer-lookup-product" onchange="Transfer.renderLookup()"></select>
+      </div>
+      <div class="table-wrap"><table class="data" id="transfer-lookup-table"></table></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><h2 style="font-size:14px">調貨單列表</h2></div>
+      <div class="filters">
+        <label>檢視</label>
+        <select id="transfer-filter-view" onchange="Transfer.render()">
+          <option value="need-me">待我處理（我是調出方）</option>
+          <option value="my-requests">我申請中（我是調入方）</option>
+          <option value="all">全部紀錄</option>
+        </select>
+      </div>
+      <div class="table-wrap"><table class="data" id="transfer-table"></table></div>
+    </div>
+  </section>
+
+  <!-- SALES -->
+  <section class="page" id="page-sales">
+    <div class="section-title">
+      <h2>銷售 / 業績報表</h2>
+      <button class="btn" onclick="Sales.openAdd()">+ 新增銷售紀錄</button>
+    </div>
+    <div class="hint">顯示近3年（36個月）完整歷史資料</div>
+    <div class="filters">
+      <label>門市</label><select id="sales-filter-store" onchange="Sales.render()"></select>
+      <label>品牌</label><select id="sales-filter-brand" onchange="Sales.render()"></select>
+    </div>
+    <div class="kpi-row" id="sales-kpis"></div>
+    <div class="chart-row">
+      <div class="card"><h3>月營收趨勢</h3><canvas id="sales-trend"></canvas></div>
+      <div class="card"><h3>各門市業績排名（近12個月）</h3><canvas id="sales-store-rank"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="data" id="sales-table"></table></div>
+    </div>
+  </section>
+
+  <!-- STAFF -->
+  <section class="page" id="page-staff">
+    <div class="section-title">
+      <h2>員工 / 排班管理</h2>
+      <button class="btn" onclick="Staff.openAdd()">+ 新增員工</button>
+    </div>
+    <div class="filters">
+      <label>門市</label><select id="staff-filter-store" onchange="Staff.render()"></select>
+    </div>
+    <div class="kpi-row" id="staff-kpis"></div>
+    <div class="card">
+      <div class="hint">排班：早／晚／休（可點擊儲存格切換班別）</div>
+      <div class="table-wrap"><table class="data" id="staff-table"></table></div>
+    </div>
+  </section>
+
+  <!-- FINANCE -->
+  <section class="page" id="page-finance">
+    <div class="section-title"><h2>財務總覽</h2></div>
+    <div class="hint">近12個月加總：營收、銷貨成本、房租等固定費用可於下表編輯</div>
+    <div class="kpi-row" id="fin-kpis"></div>
+    <div class="chart-row">
+      <div class="card"><h3>各門市淨利率比較</h3><canvas id="fin-margin-chart"></canvas></div>
+      <div class="card"><h3>各門市營收 vs 成本</h3><canvas id="fin-rev-cost-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="data" id="fin-table"></table></div>
+    </div>
+  </section>
+
+  <!-- BRANDS -->
+  <section class="page" id="page-brands">
+    <div class="section-title"><h2>各品牌銷售比較</h2></div>
+    <div class="filters">
+      <label>門市</label><select id="brand-filter-store" onchange="Brands.render()"></select>
+    </div>
+    <div class="chart-row">
+      <div class="card"><h3>品牌營收排名</h3><canvas id="brand-revenue-chart"></canvas></div>
+      <div class="card"><h3>品牌銷售件數佔比</h3><canvas id="brand-units-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="data" id="brand-table"></table></div>
+    </div>
+  </section>
+
+  <!-- BETA ANALYSIS -->
+  <section class="page" id="page-beta">
+    <div class="section-title"><h2>Beta 分析</h2></div>
+    <div class="hint beta-disclaimer">
+      借用股票 Beta 概念：以「大盤基準」(該門市以外9店合計 / 該品牌以外品牌合計) 的月營收成長率為自變數，
+      對該門市或品牌自己的月營收成長率做迴歸，斜率即為 Beta（>1 代表比大盤敏感、<1 代表較穩健），
+      截距為 Alpha（月均超額成長）。<br>
+      <strong>統計限制提醒：</strong>樣本為近3年36個月、35組月增長率觀測值，統計上仍偏少（嚴謹估計建議60組以上），數字僅供方法論示範與方向性參考，
+      不建議直接作為精確風險係數使用；且目前為範本模擬資料，並非真實市場數據，待累積真實POS資料後這個分析會更有意義。
+    </div>
+    <div class="filters">
+      <label>分析對象</label>
+      <select id="beta-scope" onchange="Beta.onScopeChange()">
+        <option value="store">門市</option>
+        <option value="brand">品牌</option>
+      </select>
+      <label>細看對象</label>
+      <select id="beta-detail-entity" onchange="Beta.render()"></select>
+    </div>
+    <div class="kpi-row" id="beta-kpis"></div>
+    <div class="chart-row">
+      <div class="card"><h3 id="beta-rank-title">Beta 排名</h3><canvas id="beta-rank-chart"></canvas></div>
+      <div class="card"><h3 id="beta-scatter-title">特徵線散點圖</h3><canvas id="beta-scatter-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="data" id="beta-table"></table></div>
+    </div>
+  </section>
+
+  <!-- FORECAST -->
+  <section class="page" id="page-forecast">
+    <div class="section-title"><h2>銷售預測</h2></div>
+    <div class="filters">
+      <label>門市</label><select id="forecast-store" onchange="Forecast.render()"></select>
+    </div>
+    <div class="hint">以近12個月營收趨勢做線性回歸，推估未來3個月營收（虛線為預測值，僅供參考）</div>
+    <div class="card"><h3 id="forecast-title">門市營收預測</h3><canvas id="forecast-chart"></canvas></div>
+    <div class="card">
+      <div class="table-wrap"><table class="data" id="forecast-table"></table></div>
+    </div>
+  </section>
+
+  <!-- PROCUREMENT -->
+  <section class="page" id="page-procurement">
+    <div class="section-title"><h2>採購建議（進貨量預測）</h2></div>
+    <div class="hint">
+      以近6個月各品牌銷售紀錄做線性趨勢，預測下月銷售件數；並依歷史「性別／顏色／尺寸」銷售輪廓抽樣拆分，
+      再扣除目前全連鎖10店合計庫存，得出建議進貨量。庫存數字可直接於明細表中編輯。
+    </div>
+    <div class="filters">
+      <label>品牌</label><select id="proc-filter-brand" onchange="Procurement.onBrandChange()"></select>
+      <label>款式</label><select id="proc-filter-product" onchange="Procurement.render()"></select>
+    </div>
+    <div class="kpi-row" id="proc-kpis"></div>
+    <div class="chart-row">
+      <div class="card"><h3 id="proc-trend-title">近6個月銷售件數趨勢 + 下月預測</h3><canvas id="proc-trend-chart"></canvas></div>
+      <div class="card"><h3>建議進貨量（依性別 × 顏色）</h3><canvas id="proc-matrix-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><h2 style="font-size:14px">性別 × 顏色 明細（點儲存格可展開尺寸明細並編輯庫存）</h2></div>
+      <div class="table-wrap"><table class="data matrix-table" id="proc-matrix-table"></table></div>
+    </div>
+  </section>
+
+  <div class="footer-note">資料僅儲存在本機瀏覽器（localStorage）。建議定期使用「匯出備份」保存資料。</div>
+</div>
+
+<!-- Generic Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<script>
+/* ============ Utilities ============ */
+function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const rng = mulberry32(20260718);
+function pick(arr){return arr[Math.floor(rng()*arr.length)];}
+function randInt(min,max){return Math.floor(rng()*(max-min+1))+min;}
+function fmtCurrency(v){if(Math.abs(v)>=1e6)return 'NT$'+(v/1e6).toFixed(2)+'M';if(Math.abs(v)>=1e3)return 'NT$'+(v/1e3).toFixed(0)+'K';return 'NT$'+Math.round(v).toLocaleString();}
+function fmtCurrencyFull(v){return 'NT$'+Math.round(v).toLocaleString();}
+function fmtNum(v){return Math.round(v).toLocaleString();}
+function fmtPct(v){return v.toFixed(1)+'%';}
+const COLORS=['#ff6b35','#2d6cdf','#2fb380','#c44e52','#8172b3','#c9a227'];
+
+function lastNMonths(n){
+  const months=[];
+  const now=new Date(2026,6,1); // July 2026
+  for(let i=n-1;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+  }
+  return months;
+}
+const HISTORY_YEARS = 3;
+const MONTHS = lastNMonths(HISTORY_YEARS*12); // 3年(36個月)完整歷史，供銷售報表/Beta分析等使用
+const TRAILING_12 = MONTHS.slice(-12); // 近12個月，供「現況」類頁面（總覽/財務/品牌/預測）使用
+const LAST6_MONTHS = MONTHS.slice(-6);
+
+/* ---- linear regression helper: returns {a,b,predict(x)} for y = a + b*x, x = 0..n-1 ---- */
+function linearRegression(values){
+  const n = values.length;
+  const xs = values.map((_,i)=>i);
+  const sumX = xs.reduce((s,x)=>s+x,0), sumY = values.reduce((s,y)=>s+y,0);
+  const sumXY = xs.reduce((s,x,i)=>s+x*values[i],0);
+  const sumX2 = xs.reduce((s,x)=>s+x*x,0);
+  const b = (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX || 1);
+  const a = (sumY - b*sumX)/n;
+  return {a,b,predict:(x)=>a+b*x};
+}
+
+/* ---- XY regression (beta/alpha/R²) for the Beta Analysis tab: y = alpha + beta*x ---- */
+function regressXY(xs,ys){
+  const n = xs.length;
+  if(n<2) return {beta:0,alpha:0,r2:0,n,stdevY:0};
+  const meanX = xs.reduce((a,b)=>a+b,0)/n;
+  const meanY = ys.reduce((a,b)=>a+b,0)/n;
+  let covXY=0, varX=0, varY=0;
+  for(let i=0;i<n;i++){ covXY += (xs[i]-meanX)*(ys[i]-meanY); varX += (xs[i]-meanX)**2; varY += (ys[i]-meanY)**2; }
+  const beta = varX>0 ? covXY/varX : 0;
+  const alpha = meanY - beta*meanX;
+  const r2 = (varX>0 && varY>0) ? (covXY*covXY)/(varX*varY) : 0;
+  return {beta, alpha, r2, n, meanX, meanY, stdevY: Math.sqrt(varY/n)};
+}
+// Paired month-over-month growth rates for two aligned monthly series (entity vs benchmark).
+// A month is only included if BOTH series have a positive prior-month value, so xs/ys stay index-aligned.
+function pairedGrowthRates(entitySeries, benchmarkSeries){
+  const xs=[], ys=[];
+  for(let i=1;i<entitySeries.length;i++){
+    const prevE = entitySeries[i-1], prevB = benchmarkSeries[i-1];
+    if(prevE>0 && prevB>0){
+      xs.push((benchmarkSeries[i]-prevB)/prevB);
+      ys.push((entitySeries[i]-prevE)/prevE);
+    }
+  }
+  return {xs,ys};
+}
+
+/* ============ Seed Data ============ */
+// trend = 每月成長增量，已針對3年(36個月)歷史窗口做過縮放，避免線性累積在3年後失真
+const STORE_SEED=[
+  {id:'S1',name:'台北忠孝店',city:'台北市',manager:'林俊傑',rent:180000,popularity:1.25,trend:0.006},
+  {id:'S2',name:'台北信義店',city:'台北市',manager:'陳怡君',rent:220000,popularity:1.4,trend:0.012},
+  {id:'S3',name:'台北西門店',city:'台北市',manager:'黃志明',rent:160000,popularity:1.15,trend:-0.004},
+  {id:'S4',name:'新北板橋店',city:'新北市',manager:'吳佳蓉',rent:140000,popularity:1.0,trend:0.008},
+  {id:'S5',name:'桃園中壢店',city:'桃園市',manager:'張家豪',rent:120000,popularity:0.85,trend:0.004},
+  {id:'S6',name:'新竹店',city:'新竹市',manager:'李美玲',rent:110000,popularity:0.8,trend:0.010},
+  {id:'S7',name:'台中一中店',city:'台中市',manager:'王大同',rent:150000,popularity:1.05,trend:-0.008},
+  {id:'S8',name:'台南中西店',city:'台南市',manager:'許雅婷',rent:100000,popularity:0.75,trend:0.004},
+  {id:'S9',name:'高雄夢時代店',city:'高雄市',manager:'鄭文彬',rent:170000,popularity:1.2,trend:0.008},
+  {id:'S10',name:'高雄三多店',city:'高雄市',manager:'劉思妤',rent:95000,popularity:0.7,trend:-0.002},
+];
+const BRAND_SEED=['Nike','Adidas','New Balance','Puma','Converse','ASICS'];
+const PRODUCT_SEED=[
+  {id:'P1',brand:'Nike',name:'Air Max 270',price:4500,cost:2200,popularity:1.3, genderSplit:{M:.45,W:.40,K:.15}, colorSplit:{'黑色':.35,'白色':.30,'灰色':.20,'紅色':.15}},
+  {id:'P2',brand:'Nike',name:'Air Force 1',price:3200,cost:1500,popularity:1.5, genderSplit:{M:.40,W:.35,K:.25}, colorSplit:{'黑色':.30,'白色':.40,'灰色':.15,'紅色':.15}},
+  {id:'P3',brand:'Adidas',name:'Ultraboost 22',price:5200,cost:2600,popularity:1.1, genderSplit:{M:.55,W:.35,K:.10}, colorSplit:{'黑色':.40,'白色':.25,'灰色':.25,'紅色':.10}},
+  {id:'P4',brand:'Adidas',name:'Stan Smith',price:2800,cost:1300,popularity:1.35, genderSplit:{M:.35,W:.45,K:.20}, colorSplit:{'黑色':.20,'白色':.50,'灰色':.15,'紅色':.15}},
+  {id:'P5',brand:'New Balance',name:'990v5',price:5800,cost:2900,popularity:1.0, genderSplit:{M:.60,W:.30,K:.10}, colorSplit:{'黑色':.30,'白色':.20,'灰色':.35,'紅色':.15}},
+  {id:'P6',brand:'New Balance',name:'574',price:3000,cost:1400,popularity:1.25, genderSplit:{M:.40,W:.35,K:.25}, colorSplit:{'黑色':.25,'白色':.25,'灰色':.30,'紅色':.20}},
+  {id:'P7',brand:'Puma',name:'Suede Classic',price:2400,cost:1100,popularity:0.9, genderSplit:{M:.40,W:.40,K:.20}, colorSplit:{'黑色':.45,'白色':.20,'灰色':.15,'紅色':.20}},
+  {id:'P8',brand:'Puma',name:'RS-X',price:3600,cost:1700,popularity:0.85, genderSplit:{M:.45,W:.35,K:.20}, colorSplit:{'黑色':.30,'白色':.25,'灰色':.20,'紅色':.25}},
+  {id:'P9',brand:'Converse',name:'Chuck 70',price:2600,cost:1200,popularity:1.15, genderSplit:{M:.35,W:.40,K:.25}, colorSplit:{'黑色':.35,'白色':.30,'灰色':.15,'紅色':.20}},
+  {id:'P10',brand:'Converse',name:'All Star',price:2000,cost:900,popularity:1.2, genderSplit:{M:.30,W:.35,K:.35}, colorSplit:{'黑色':.30,'白色':.35,'灰色':.15,'紅色':.20}},
+  {id:'P11',brand:'ASICS',name:'Gel-Kayano 29',price:5500,cost:2700,popularity:0.8, genderSplit:{M:.55,W:.35,K:.10}, colorSplit:{'黑色':.35,'白色':.20,'灰色':.30,'紅色':.15}},
+  {id:'P12',brand:'ASICS',name:'Gel-Lyte III',price:3400,cost:1600,popularity:0.7, genderSplit:{M:.45,W:.35,K:.20}, colorSplit:{'黑色':.30,'白色':.25,'灰色':.25,'紅色':.20}},
+];
+
+/* ---- SKU dimensions for procurement forecast: 性別/年齡 × 顏色 × 尺寸 ---- */
+const GENDERS=[{code:'M',label:'男款'},{code:'W',label:'女款'},{code:'K',label:'童款'}];
+const SKU_COLORS=['黑色','白色','灰色','紅色'];
+const SIZE_PROFILE={
+  M:{sizes:[40,41,42,43,44,45], weights:[.10,.16,.22,.22,.18,.12]},
+  W:{sizes:[35,36,37,38,39], weights:[.12,.20,.28,.24,.16]},
+  K:{sizes:[28,29,30,31,32,33], weights:[.14,.18,.20,.20,.16,.12]},
+};
+function genderLabel(code){ const g=GENDERS.find(x=>x.code===code); return g?g.label:code; }
+const SURNAMES=['林','陳','黃','張','李','王','吳','劉','蔡','楊','許','鄭','謝','洪','邱'];
+const GIVEN=['俊傑','怡君','志明','佳蓉','家豪','美玲','大同','雅婷','文彬','思妤','冠廷','宜蓁','柏翰','子晴','彥廷','詩涵','育呈','詠晴'];
+const ROLES=['店長','副店長','正職店員','正職店員','兼職店員'];
+const SHIFT_OPTS=['早','晚','休'];
+const DAYS=['一','二','三','四','五','六','日'];
+
+function genName(){return pick(SURNAMES)+pick(GIVEN);}
+
+function generateSeedData(){
+  const stores = STORE_SEED.map(s=>({...s}));
+  const brands = BRAND_SEED.slice();
+  const products = PRODUCT_SEED.map(p=>({...p}));
+
+  // Inventory: per store per product
+  const inventory=[];
+  stores.forEach(st=>{
+    products.forEach(p=>{
+      const reorder = 12;
+      const stock = Math.max(0, Math.round(randInt(4,70)*st.popularity*p.popularity/1.1));
+      inventory.push({store:st.id,product:p.id,qty:stock,reorder});
+    });
+  });
+
+  // Sales: per store per month per product, with trend + seasonality
+  const sales=[];
+  stores.forEach(st=>{
+    products.forEach(p=>{
+      MONTHS.forEach((m,idx)=>{
+        const seasonal = 1 + 0.15*Math.sin((idx/12)*Math.PI*2 + 1);
+        const growth = 1 + st.trend*idx;
+        const base = 6*st.popularity*p.popularity*seasonal*growth;
+        const noise = 0.7+rng()*0.6;
+        const units = Math.max(0, Math.round(base*noise));
+        if(units>0) sales.push({id:'SL'+st.id+p.id+m, store:st.id, product:p.id, month:m, units});
+      });
+    });
+  });
+
+  // Staff
+  const staff=[];
+  let empId=1;
+  stores.forEach(st=>{
+    const n = randInt(4,6);
+    for(let i=0;i<n;i++){
+      const role = i===0?'店長':(i===1?'副店長':pick(ROLES));
+      const shifts={};
+      DAYS.forEach(d=>{shifts[d]= role==='店長'||role==='副店長' ? pick(['早','晚']) : pick(SHIFT_OPTS);});
+      staff.push({id:'E'+(empId++), store:st.id, name:genName(), role, phone:'09'+randInt(10,99)+'-'+randInt(100,999)+'-'+randInt(100,999), shifts});
+    }
+  });
+
+  // SKU-level current inventory (chain-wide total across all 10 stores) for procurement forecast.
+  // Sized roughly proportional to each product's recent monthly sales velocity x months-of-supply, split by
+  // the product's gender/color/size sampling profile, so low/overstock scenarios feel realistic.
+  const skuInventory=[];
+  products.forEach(p=>{
+    const last6Units = sales.filter(s=>s.product===p.id && LAST6_MONTHS.includes(s.month)).reduce((sum,s)=>sum+s.units,0);
+    const avgMonthlyUnits = last6Units/6;
+    GENDERS.forEach(g=>{
+      const gShare = p.genderSplit[g.code] || 0;
+      const sizeProfile = SIZE_PROFILE[g.code];
+      SKU_COLORS.forEach(color=>{
+        const cShare = p.colorSplit[color] || 0;
+        sizeProfile.sizes.forEach((size,sIdx)=>{
+          const sShare = sizeProfile.weights[sIdx];
+          const monthsOfSupply = 0.3 + rng()*1.9; // 0.3 ~ 2.2 months of supply on hand (mix of understock/overstock)
+          const noise = 0.4 + rng()*1.2;
+          const qty = Math.max(0, Math.round(avgMonthlyUnits*gShare*cShare*sShare*monthsOfSupply*noise));
+          skuInventory.push({product:p.id, gender:g.code, color, size, qty});
+        });
+      });
+    });
+  });
+
+  return {stores,brands,products,inventory,sales,staff,skuInventory,transfers:[], financeOverrides:{}};
+}
+function nextTransferId(existingTransfers){
+  const maxN = existingTransfers.reduce((max,t)=>{ const n=parseInt((t.id||'').replace('T',''))||0; return Math.max(max,n); },0);
+  return 'T'+String(maxN+1).padStart(4,'0');
+}
+function nowLabel(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+
+/* ============ App State & Persistence ============ */
+const STORAGE_KEY='shoeChainData_v1';
+const App = {
+  data:null,
+  init(){
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved){ try{ this.data = JSON.parse(saved); }catch(e){ this.data = generateSeedData(); } }
+    else { this.data = generateSeedData(); }
+    this.migrateData();
+    this.populateGlobalFilters();
+    this.initLoginStore();
+    this.bindTabs();
+    Overview.render();
+    Inventory.render();
+    Transfer.render();
+    Sales.render();
+    Staff.render();
+    Finance.render();
+    Brands.render();
+    Beta.init();
+    Forecast.render();
+    Procurement.render();
+    document.getElementById('data-asof').textContent = '10間門市 · 歷史資料期間 '+MONTHS[0]+' ~ '+MONTHS[MONTHS.length-1]+'（近3年）';
+  },
+  // "Currently logged-in store" is a session/demo concept, kept separate from the shared dataset
+  // so switching it (or exporting/importing backups) never mixes up with real store data.
+  LOGIN_STORE_KEY:'shoeChainLoginStore_v1',
+  initLoginStore(){
+    const sel = document.getElementById('login-store');
+    sel.innerHTML = this.data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    const saved = localStorage.getItem(this.LOGIN_STORE_KEY);
+    sel.value = (saved && this.data.stores.some(s=>s.id===saved)) ? saved : this.data.stores[0].id;
+    if(!saved) localStorage.setItem(this.LOGIN_STORE_KEY, sel.value);
+  },
+  onLoginStoreChange(){
+    localStorage.setItem(this.LOGIN_STORE_KEY, document.getElementById('login-store').value);
+    Transfer.render();
+  },
+  currentStore(){ return document.getElementById('login-store').value; },
+  // Backfill fields for data saved by an earlier version of this file (before the procurement feature existed)
+  migrateData(){
+    let changed=false;
+    if(!this.data.brands){ this.data.brands = BRAND_SEED.slice(); changed=true; }
+    this.data.products.forEach(p=>{
+      const seed = PRODUCT_SEED.find(x=>x.id===p.id);
+      if(!p.genderSplit && seed){ p.genderSplit = seed.genderSplit; changed=true; }
+      if(!p.colorSplit && seed){ p.colorSplit = seed.colorSplit; changed=true; }
+    });
+    if(!this.data.skuInventory){
+      const skuInventory=[];
+      this.data.products.forEach(p=>{
+        const last6Units = this.data.sales.filter(s=>s.product===p.id && LAST6_MONTHS.includes(s.month)).reduce((sum,s)=>sum+s.units,0);
+        const avgMonthlyUnits = last6Units/6;
+        GENDERS.forEach(g=>{
+          const gShare = p.genderSplit[g.code]||0;
+          const sizeProfile = SIZE_PROFILE[g.code];
+          SKU_COLORS.forEach(color=>{
+            const cShare = p.colorSplit[color]||0;
+            sizeProfile.sizes.forEach((size,sIdx)=>{
+              const sShare = sizeProfile.weights[sIdx];
+              const monthsOfSupply = 0.3+rng()*1.9;
+              const noise = 0.4+rng()*1.2;
+              const qty = Math.max(0, Math.round(avgMonthlyUnits*gShare*cShare*sShare*monthsOfSupply*noise));
+              skuInventory.push({product:p.id, gender:g.code, color, size, qty});
+            });
+          });
+        });
+      });
+      this.data.skuInventory = skuInventory;
+      changed=true;
+    }
+    if(!this.data.transfers){ this.data.transfers = []; changed=true; }
+    if(changed) this.save();
+  },
+  save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data)); },
+  resetData(){
+    if(!confirm('確定要清除所有編輯，重置回範本資料嗎？')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    this.data = generateSeedData();
+    this.save();
+    location.reload();
+  },
+  exportData(){
+    const blob = new Blob([JSON.stringify(this.data,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'shoe-chain-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    a.click();
+  },
+  importData(evt){
+    const file = evt.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e=>{
+      try{
+        const parsed = JSON.parse(e.target.result);
+        if(!parsed.stores||!parsed.products) throw new Error('格式不符');
+        this.data = parsed;
+        this.save();
+        location.reload();
+      }catch(err){ alert('匯入失敗：檔案格式不正確'); }
+    };
+    reader.readAsText(file);
+  },
+  storeName(id){ const s=this.data.stores.find(x=>x.id===id); return s?s.name:id; },
+  productName(id){ const p=this.data.products.find(x=>x.id===id); return p?p.brand+' '+p.name:id; },
+  product(id){ return this.data.products.find(x=>x.id===id); },
+  bindTabs(){
+    const renderMap = {
+      overview:()=>Overview.render(), inventory:()=>Inventory.render(), transfer:()=>Transfer.render(),
+      sales:()=>Sales.render(), staff:()=>Staff.render(), finance:()=>Finance.render(),
+      brands:()=>Brands.render(), beta:()=>Beta.render(), forecast:()=>Forecast.render(), procurement:()=>Procurement.render()
+    };
+    document.querySelectorAll('#tabs button').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('section.page').forEach(s=>s.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('page-'+btn.dataset.tab).classList.add('active');
+        if(renderMap[btn.dataset.tab]) renderMap[btn.dataset.tab]();
+      });
+    });
+  },
+  populateGlobalFilters(){
+    const storeOptEls = ['inv-filter-store','sales-filter-store','staff-filter-store','brand-filter-store','forecast-store'];
+    storeOptEls.forEach(id=>{
+      const sel = document.getElementById(id);
+      sel.innerHTML = (id==='forecast-store'?'':'<option value="all">全部門市</option>') +
+        this.data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    });
+    const brandOptEls=['inv-filter-brand','sales-filter-brand'];
+    brandOptEls.forEach(id=>{
+      const sel = document.getElementById(id);
+      sel.innerHTML = '<option value="all">全部品牌</option>' + this.data.brands.map(b=>`<option value="${b}">${b}</option>`).join('');
+    });
+    document.getElementById('proc-filter-brand').innerHTML = this.data.brands.map(b=>`<option value="${b}">${b}</option>`).join('');
+    document.getElementById('transfer-lookup-product').innerHTML = this.data.products.map(p=>`<option value="${p.id}">${p.brand} ${p.name}</option>`).join('');
+  },
+  closeModal(){ document.getElementById('modal-overlay').classList.remove('show'); },
+  openModal(html){ const m=document.getElementById('modal-body'); m.innerHTML = html; m.classList.remove('wide'); document.getElementById('modal-overlay').classList.add('show'); },
+  skuRec(productId,gender,color,size){ return this.data.skuInventory.find(r=>r.product===productId&&r.gender===gender&&r.color===color&&r.size===size); },
+  setSkuQty(productId,gender,color,size,qty){
+    const rec = this.skuRec(productId,gender,color,size);
+    if(rec){ rec.qty = Math.max(0, qty); } else { this.data.skuInventory.push({product:productId,gender,color,size,qty:Math.max(0,qty)}); }
+    this.save();
+  }
+};
+
+/* ============ Aggregation Helpers ============ */
+function salesRevenue(saleRec){ const p = App.product(saleRec.product); return p? p.price*saleRec.units : 0; }
+function salesCost(saleRec){ const p = App.product(saleRec.product); return p? p.cost*saleRec.units : 0; }
+
+// "現況"類頁面（總覽/財務/品牌比較/預測）預設只看近12個月，避免資料期間拉長到3年後總額被灌水
+function inTrailing12(month){ return TRAILING_12.includes(month); }
+
+function storeRevenueTotals(months){
+  const monthSet = months || TRAILING_12;
+  const map={};
+  App.data.stores.forEach(s=>map[s.id]=0);
+  App.data.sales.forEach(sl=>{ if(!monthSet.includes(sl.month)) return; map[sl.store]=(map[sl.store]||0)+salesRevenue(sl); });
+  return map;
+}
+function storeMonthlyRevenue(storeId, months){
+  const monthList = months || TRAILING_12;
+  const map={}; monthList.forEach(m=>map[m]=0);
+  App.data.sales.filter(s=>storeId==='all'||s.store===storeId).forEach(sl=>{ if(map[sl.month]===undefined) return; map[sl.month]=(map[sl.month]||0)+salesRevenue(sl); });
+  return monthList.map(m=>map[m]);
+}
+function brandTotals(storeFilter, months){
+  const monthSet = months || TRAILING_12;
+  const map={}; App.data.brands.forEach(b=>map[b]={revenue:0,units:0});
+  App.data.sales.filter(s=>(storeFilter==='all'||s.store===storeFilter) && monthSet.includes(s.month)).forEach(sl=>{
+    const p = App.product(sl.product); if(!p) return;
+    map[p.brand].revenue += p.price*sl.units;
+    map[p.brand].units += sl.units;
+  });
+  return map;
+}
+// Full-history (3-year) monthly revenue series, used by the Beta analysis tab
+function brandMonthlyRevenueSeries(brand, months){
+  const monthList = months || MONTHS;
+  const map={}; monthList.forEach(m=>map[m]=0);
+  App.data.sales.forEach(sl=>{
+    if(map[sl.month]===undefined) return;
+    const p = App.product(sl.product); if(!p || p.brand!==brand) return;
+    map[sl.month] += salesRevenue(sl);
+  });
+  return monthList.map(m=>map[m]);
+}
+
+/* ============ OVERVIEW ============ */
+const Overview = {
+  render(){
+    const trailingSales = App.data.sales.filter(sl=>inTrailing12(sl.month));
+    const totalRevenue = trailingSales.reduce((sum,sl)=>sum+salesRevenue(sl),0);
+    const totalUnits = trailingSales.reduce((sum,sl)=>sum+sl.units,0);
+    const totalStock = App.data.inventory.reduce((sum,i)=>sum+i.qty,0);
+    const lowStock = App.data.inventory.filter(i=>i.qty<i.reorder).length;
+
+    document.getElementById('ov-kpis').innerHTML = `
+      <div class="kpi-card"><div class="kpi-label">近12個月總營收</div><div class="kpi-value">${fmtCurrency(totalRevenue)}</div><div class="kpi-change neutral">10間門市合計</div></div>
+      <div class="kpi-card"><div class="kpi-label">總銷售件數</div><div class="kpi-value">${fmtNum(totalUnits)}</div><div class="kpi-change neutral">雙鞋為單位</div></div>
+      <div class="kpi-card"><div class="kpi-label">目前總庫存量</div><div class="kpi-value">${fmtNum(totalStock)}</div><div class="kpi-change neutral">10門市 × 12品項</div></div>
+      <div class="kpi-card"><div class="kpi-label">低於安全庫存品項</div><div class="kpi-value" style="color:${lowStock>0?'var(--negative)':'var(--positive)'}">${lowStock}</div><div class="kpi-change ${lowStock>0?'negative':'positive'}">${lowStock>0?'需儘快補貨':'庫存健康'}</div></div>
+    `;
+
+    const revMap = storeRevenueTotals();
+    const storesSorted = [...App.data.stores].sort((a,b)=>revMap[b.id]-revMap[a.id]);
+    chartUpsert('ov-store-revenue','bar',{
+      labels: storesSorted.map(s=>s.name),
+      datasets:[{label:'營收',data:storesSorted.map(s=>revMap[s.id]),backgroundColor:COLORS[0]+'CC',borderRadius:4}]
+    },{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtCurrencyFull(c.parsed.x)}}},scales:{x:{ticks:{callback:v=>fmtCurrency(v)}}}});
+
+    const bMap = brandTotals('all');
+    chartUpsert('ov-brand-share','doughnut',{
+      labels:App.data.brands,
+      datasets:[{data:App.data.brands.map(b=>bMap[b].revenue),backgroundColor:COLORS.map(c=>c+'CC')}]
+    },{plugins:{legend:{position:'right'}}});
+
+    const rows = App.data.inventory.filter(i=>i.qty<i.reorder).sort((a,b)=>a.qty-b.qty).slice(0,15).map(i=>{
+      const candidates = App.data.inventory.filter(x=>x.product===i.product && x.store!==i.store && x.qty>x.reorder*2)
+        .sort((a,b)=>b.qty-a.qty)[0];
+      const needQty = i.reorder - i.qty;
+      const suggestion = candidates
+        ? `建議自「${App.storeName(candidates.store)}」調貨（庫存${candidates.qty}） <span class="action-link" onclick="Transfer.openCreate('${candidates.store}','${i.store}','${i.product}',${Math.min(needQty,candidates.qty)})">建立調貨單 →</span>`
+        : '無其他門市有多餘庫存';
+      return `<tr><td>${App.storeName(i.store)}</td><td>${App.productName(i.product)}</td><td><span class="badge low">${i.qty} / 安全值${i.reorder}</span></td><td>${suggestion}</td></tr>`;
+    }).join('');
+    document.getElementById('ov-restock-table').innerHTML = `<thead><tr><th>門市</th><th>品項</th><th>目前庫存</th><th>調貨建議</th></tr></thead><tbody>${rows||'<tr><td colspan="4">目前無低庫存品項</td></tr>'}</tbody>`;
+  }
+};
+
+/* ============ INVENTORY ============ */
+const Inventory = {
+  render(){
+    const storeF = document.getElementById('inv-filter-store').value || 'all';
+    const brandF = document.getElementById('inv-filter-brand').value || 'all';
+    const statusF = document.getElementById('inv-filter-status').value || 'all';
+    let rows = App.data.inventory.filter(i=>{
+      const p = App.product(i.product);
+      if(storeF!=='all' && i.store!==storeF) return false;
+      if(brandF!=='all' && p.brand!==brandF) return false;
+      if(statusF==='low' && !(i.qty<i.reorder)) return false;
+      if(statusF==='ok' && (i.qty<i.reorder)) return false;
+      return true;
+    });
+    rows.sort((a,b)=>a.qty-b.qty);
+    const html = rows.map(i=>{
+      const p = App.product(i.product);
+      const status = i.qty<i.reorder ? '<span class="badge low">補貨</span>' : (i.qty<i.reorder*2 ? '<span class="badge mid">偏低</span>' : '<span class="badge ok">正常</span>');
+      return `<tr><td>${App.storeName(i.store)}</td><td>${p.brand}</td><td>${p.name}</td><td>${i.qty}</td><td>${i.reorder}</td><td>${status}</td>
+        <td><span class="action-link" onclick="Inventory.openEdit('${i.store}','${i.product}')">調整</span></td></tr>`;
+    }).join('');
+    document.getElementById('inv-table').innerHTML = `<thead><tr><th>門市</th><th>品牌</th><th>鞋款</th><th>庫存</th><th>安全庫存</th><th>狀態</th><th>操作</th></tr></thead><tbody>${html||'<tr><td colspan="7">無符合條件的資料</td></tr>'}</tbody>`;
+  },
+  openAdd(){
+    const storeOpts = App.data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    const prodOpts = App.data.products.map(p=>`<option value="${p.id}">${p.brand} ${p.name}</option>`).join('');
+    App.openModal(`
+      <h3>新增 / 調整庫存</h3>
+      <div class="form-row"><label>門市</label><select id="m-store">${storeOpts}</select></div>
+      <div class="form-row"><label>鞋款</label><select id="m-product">${prodOpts}</select></div>
+      <div class="form-row"><label>庫存數量</label><input type="number" id="m-qty" value="20" min="0"></div>
+      <div class="form-row"><label>安全庫存量</label><input type="number" id="m-reorder" value="12" min="0"></div>
+      <div class="modal-actions"><button class="btn outline" onclick="App.closeModal()">取消</button><button class="btn" onclick="Inventory.save()">儲存</button></div>
+    `);
+  },
+  openEdit(storeId,productId){
+    const rec = App.data.inventory.find(i=>i.store===storeId && i.product===productId);
+    App.openModal(`
+      <h3>調整庫存：${App.storeName(storeId)} - ${App.productName(productId)}</h3>
+      <div class="form-row"><label>庫存數量</label><input type="number" id="m-qty" value="${rec.qty}" min="0"></div>
+      <div class="form-row"><label>安全庫存量</label><input type="number" id="m-reorder" value="${rec.reorder}" min="0"></div>
+      <div class="modal-actions"><button class="btn outline" onclick="App.closeModal()">取消</button><button class="btn" onclick="Inventory.saveEdit('${storeId}','${productId}')">儲存</button></div>
+    `);
+  },
+  save(){
+    const store = document.getElementById('m-store').value;
+    const product = document.getElementById('m-product').value;
+    const qty = parseInt(document.getElementById('m-qty').value)||0;
+    const reorder = parseInt(document.getElementById('m-reorder').value)||0;
+    let rec = App.data.inventory.find(i=>i.store===store && i.product===product);
+    if(rec){ rec.qty=qty; rec.reorder=reorder; } else { App.data.inventory.push({store,product,qty,reorder}); }
+    App.save(); App.closeModal(); Inventory.render(); Overview.render(); Transfer.renderLookup();
+  },
+  saveEdit(storeId,productId){
+    const rec = App.data.inventory.find(i=>i.store===storeId && i.product===productId);
+    rec.qty = parseInt(document.getElementById('m-qty').value)||0;
+    rec.reorder = parseInt(document.getElementById('m-reorder').value)||0;
+    App.save(); App.closeModal(); Inventory.render(); Overview.render(); Transfer.renderLookup();
+  }
+};
+
+/* ============ TRANSFER (inter-store 調貨) ============ */
+const Transfer = {
+  render(){
+    const login = App.currentStore();
+    const view = document.getElementById('transfer-filter-view').value || 'need-me';
+    let rows = App.data.transfers.slice();
+    if(view==='need-me') rows = rows.filter(t=>t.fromStore===login && t.status==='pending');
+    else if(view==='my-requests') rows = rows.filter(t=>t.toStore===login && t.status==='pending');
+    rows.sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||''));
+
+    const statusBadge = (s)=>({
+      pending:'<span class="badge pending">待處理</span>',
+      approved:'<span class="badge approved">已完成</span>',
+      rejected:'<span class="badge rejected">已拒絕</span>',
+      cancelled:'<span class="badge cancelled">已取消</span>'
+    }[s]||s);
+
+    const html = rows.map(t=>{
+      let actions = '';
+      if(t.status==='pending' && t.fromStore===login){
+        actions = `<span class="action-link" onclick="Transfer.approve('${t.id}')">同意調貨</span> &nbsp; <span class="action-link danger" onclick="Transfer.reject('${t.id}')">拒絕</span>`;
+      } else if(t.status==='pending' && t.toStore===login){
+        actions = `<span class="action-link danger" onclick="Transfer.cancel('${t.id}')">取消申請</span>`;
+      }
+      return `<tr>
+        <td>${t.id}</td>
+        <td>${App.storeName(t.fromStore)}${t.fromStore===login?' (我方)':''}</td>
+        <td>${App.storeName(t.toStore)}${t.toStore===login?' (我方)':''}</td>
+        <td>${App.productName(t.product)}</td>
+        <td>${t.qty}</td>
+        <td>${statusBadge(t.status)}</td>
+        <td>${t.createdAt}</td>
+        <td>${actions}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('transfer-table').innerHTML = `<thead><tr><th>單號</th><th>調出門市</th><th>調入門市</th><th>鞋款</th><th>數量</th><th>狀態</th><th>建立時間</th><th>操作</th></tr></thead><tbody>${html||'<tr><td colspan="8">目前沒有符合條件的調貨單</td></tr>'}</tbody>`;
+
+    const pendingNeedMe = App.data.transfers.filter(t=>t.fromStore===login && t.status==='pending').length;
+    const pendingMyReq = App.data.transfers.filter(t=>t.toStore===login && t.status==='pending').length;
+    const completedTotalQty = App.data.transfers.filter(t=>t.status==='approved').reduce((s,t)=>s+t.qty,0);
+    const inTransitQty = App.data.transfers.filter(t=>t.status==='pending').reduce((s,t)=>s+t.qty,0);
+    document.getElementById('transfer-kpis').innerHTML = `
+      <div class="kpi-card"><div class="kpi-label">待我處理（需回覆）</div><div class="kpi-value" style="color:${pendingNeedMe>0?'var(--warn)':'inherit'}">${pendingNeedMe}</div></div>
+      <div class="kpi-card"><div class="kpi-label">我申請中</div><div class="kpi-value">${pendingMyReq}</div></div>
+      <div class="kpi-card"><div class="kpi-label">全連鎖調貨中件數</div><div class="kpi-value">${inTransitQty}</div></div>
+      <div class="kpi-card"><div class="kpi-label">歷史已完成調貨件數</div><div class="kpi-value">${completedTotalQty}</div></div>
+    `;
+
+    this.renderLookup();
+  },
+  renderLookup(){
+    const productSel = document.getElementById('transfer-lookup-product');
+    if(!productSel.value){ productSel.value = App.data.products[0].id; }
+    const productId = productSel.value;
+    const login = App.currentStore();
+    const rows = App.data.stores.map(st=>{
+      const inv = App.data.inventory.find(i=>i.store===st.id && i.product===productId);
+      const qty = inv?inv.qty:0;
+      const reorder = inv?inv.reorder:12;
+      const status = qty<reorder ? '<span class="badge low">需補貨</span>' : (qty<reorder*2?'<span class="badge mid">偏低</span>':'<span class="badge ok">正常</span>');
+      const isMe = st.id===login;
+      const action = (!isMe && qty>0) ? `<span class="action-link" onclick="Transfer.openCreate('${st.id}','${login}','${productId}',${Math.min(qty,Math.max(1,reorder))})">跟此店調貨 →</span>` : (isMe?'—':'');
+      return `<tr class="${isMe?'me-row':''}"><td>${st.name}${isMe?' (我方)':''}</td><td>${qty}</td><td>${reorder}</td><td>${status}</td><td>${action}</td></tr>`;
+    });
+    document.getElementById('transfer-lookup-table').innerHTML = `<thead><tr><th>門市</th><th>目前庫存</th><th>安全庫存</th><th>狀態</th><th>操作</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+  },
+  openCreate(fromStore,toStore,productId,qty){
+    const storeOpts = (selectedId)=>App.data.stores.map(s=>`<option value="${s.id}" ${s.id===selectedId?'selected':''}>${s.name}</option>`).join('');
+    const prodOpts = (selectedId)=>App.data.products.map(p=>`<option value="${p.id}" ${p.id===selectedId?'selected':''}>${p.brand} ${p.name}</option>`).join('');
+    const defaultTo = toStore || App.currentStore();
+    const defaultFrom = fromStore || (App.data.stores.find(s=>s.id!==defaultTo)||App.data.stores[0]).id;
+    App.openModal(`
+      <h3>建立調貨單</h3>
+      <div class="hint">向其他門市申請調貨，需對方同意後才會實際異動庫存</div>
+      <div class="form-row"><label>調出門市（對方）</label><select id="m-from">${storeOpts(defaultFrom)}</select></div>
+      <div class="form-row"><label>調入門市（我方）</label><select id="m-to">${storeOpts(defaultTo)}</select></div>
+      <div class="form-row"><label>鞋款</label><select id="m-product">${prodOpts(productId)}</select></div>
+      <div class="form-row"><label>數量</label><input type="number" id="m-qty" value="${qty||5}" min="1"></div>
+      <div class="form-row"><label>備註（選填）</label><input type="text" id="m-note" placeholder="例如：客人指定尺寸缺貨"></div>
+      <div class="modal-actions"><button class="btn outline" onclick="App.closeModal()">取消</button><button class="btn" onclick="Transfer.save()">送出申請</button></div>
+    `);
+  },
+  save(){
+    const fromStore = document.getElementById('m-from').value;
+    const toStore = document.getElementById('m-to').value;
+    const product = document.getElementById('m-product').value;
+    const qty = parseInt(document.getElementById('m-qty').value)||0;
+    const note = document.getElementById('m-note').value;
+    if(fromStore===toStore){ alert('調出門市與調入門市不能相同'); return; }
+    if(qty<=0){ alert('數量需大於0'); return; }
+    const id = nextTransferId(App.data.transfers);
+    App.data.transfers.push({id, fromStore, toStore, product, qty, status:'pending', note, createdAt:nowLabel()});
+    App.save(); App.closeModal(); Transfer.render();
+  },
+  approve(id){
+    const t = App.data.transfers.find(x=>x.id===id);
+    if(!t || t.status!=='pending') return;
+    const fromInv = App.data.inventory.find(i=>i.store===t.fromStore && i.product===t.product);
+    const available = fromInv? fromInv.qty : 0;
+    if(available < t.qty){
+      alert(`庫存不足：${App.storeName(t.fromStore)}目前僅有 ${available} 件，無法同意此調貨單（申請 ${t.qty} 件）。請對方調整數量或改為拒絕。`);
+      return;
+    }
+    fromInv.qty -= t.qty;
+    let toInv = App.data.inventory.find(i=>i.store===t.toStore && i.product===t.product);
+    if(toInv){ toInv.qty += t.qty; } else { App.data.inventory.push({store:t.toStore, product:t.product, qty:t.qty, reorder:12}); }
+    t.status='approved'; t.respondedAt = nowLabel();
+    App.save(); Transfer.render(); Inventory.render(); Overview.render();
+  },
+  reject(id){
+    const t = App.data.transfers.find(x=>x.id===id);
+    if(!t || t.status!=='pending') return;
+    t.status='rejected'; t.respondedAt = nowLabel();
+    App.save(); Transfer.render();
+  },
+  cancel(id){
+    const t = App.data.transfers.find(x=>x.id===id);
+    if(!t || t.status!=='pending') return;
+    t.status='cancelled'; t.respondedAt = nowLabel();
+    App.save(); Transfer.render();
+  }
+};
+
+/* ============ SALES ============ */
+const Sales = {
+  render(){
+    const storeF = document.getElementById('sales-filter-store').value || 'all';
+    const brandF = document.getElementById('sales-filter-brand').value || 'all';
+    let rows = App.data.sales.filter(s=>{
+      const p = App.product(s.product);
+      if(storeF!=='all' && s.store!==storeF) return false;
+      if(brandF!=='all' && p.brand!==brandF) return false;
+      return true;
+    });
+
+    const totalRevenue = rows.reduce((sum,s)=>sum+salesRevenue(s),0);
+    const totalUnits = rows.reduce((sum,s)=>sum+s.units,0);
+    const avgOrderVal = totalUnits>0 ? totalRevenue/totalUnits : 0;
+    document.getElementById('sales-kpis').innerHTML = `
+      <div class="kpi-card"><div class="kpi-label">篩選範圍總營收</div><div class="kpi-value">${fmtCurrency(totalRevenue)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">篩選範圍銷售件數</div><div class="kpi-value">${fmtNum(totalUnits)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">平均單價</div><div class="kpi-value">${fmtCurrency(avgOrderVal)}</div></div>
+    `;
+
+    const monthMap={}; MONTHS.forEach(m=>monthMap[m]=0);
+    rows.forEach(s=>monthMap[s.month]+=salesRevenue(s));
+    chartUpsert('sales-trend','line',{
+      labels:MONTHS,
+      datasets:[{label:'月營收',data:MONTHS.map(m=>monthMap[m]),borderColor:COLORS[1],backgroundColor:COLORS[1]+'33',fill:true,tension:.3}]
+    },{plugins:{tooltip:{callbacks:{label:c=>fmtCurrencyFull(c.parsed.y)}}},scales:{y:{ticks:{callback:v=>fmtCurrency(v)}}}});
+
+    const revMap={};
+    App.data.stores.forEach(s=>revMap[s.id]=0);
+    App.data.sales.filter(s=>brandF==='all'||App.product(s.product).brand===brandF).forEach(s=>revMap[s.store]+=salesRevenue(s));
+    const storesSorted=[...App.data.stores].sort((a,b)=>revMap[b.id]-revMap[a.id]);
+    chartUpsert('sales-store-rank','bar',{
+      labels:storesSorted.map(s=>s.name),
+      datasets:[{label:'營收',data:storesSorted.map(s=>revMap[s.id]),backgroundColor:COLORS[2]+'CC',borderRadius:4}]
+    },{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fmtCurrency(v)}}}});
+
+    rows = [...rows].sort((a,b)=>b.month.localeCompare(a.month)).slice(0,200);
+    const html = rows.map(s=>{
+      const p = App.product(s.product);
+      return `<tr><td>${s.month}</td><td>${App.storeName(s.store)}</td><td>${p.brand}</td><td>${p.name}</td><td>${s.units}</td><td>${fmtCurrencyFull(salesRevenue(s))}</td></tr>`;
+    }).join('');
+    document.getElementById('sales-table').innerHTML = `<thead><tr><th>月份</th><th>門市</th><th>品牌</th><th>鞋款</th><th>件數</th><th>營收</th></tr></thead><tbody>${html||'<tr><td colspan="6">無資料</td></tr>'}</tbody>`;
+  },
+  openAdd(){
+    const storeOpts = App.data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    const prodOpts = App.data.products.map(p=>`<option value="${p.id}">${p.brand} ${p.name}</option>`).join('');
+    const monthOpts = MONTHS.map(m=>`<option value="${m}">${m}</option>`).join('');
+    App.openModal(`
+      <h3>新增銷售紀錄</h3>
+      <div class="form-row"><label>月份</label><select id="m-month">${monthOpts}</select></div>
+      <div class="form-row"><label>門市</label><select id="m-store">${storeOpts}</select></div>
+      <div class="form-row"><label>鞋款</label><select id="m-product">${prodOpts}</select></div>
+      <div class="form-row"><label>銷售件數</label><input type="number" id="m-units" value="5" min="0"></div>
+      <div class="modal-actions"><button class="btn outline" onclick="App.closeModal()">取消</button><button class="btn" onclick="Sales.save()">儲存</button></div>
+    `);
+  },
+  save(){
+    const month = document.getElementById('m-month').value;
+    const store = document.getElementById('m-store').value;
+    const product = document.getElementById('m-product').value;
+    const units = parseInt(document.getElementById('m-units').value)||0;
+    const id = 'SL'+store+product+month+'-manual'+Date.now();
+    App.data.sales.push({id,store,product,month,units});
+    App.save(); App.closeModal(); Sales.render(); Overview.render(); Finance.render(); Brands.render(); Forecast.render(); Procurement.render();
+  }
+};
+
+/* ============ STAFF ============ */
+const Staff = {
+  render(){
+    const storeF = document.getElementById('staff-filter-store').value || 'all';
+    const rows = App.data.staff.filter(e=>storeF==='all'||e.store===storeF);
+
+    document.getElementById('staff-kpis').innerHTML = `
+      <div class="kpi-card"><div class="kpi-label">員工總數</div><div class="kpi-value">${rows.length}</div></div>
+      <div class="kpi-card"><div class="kpi-label">店長人數</div><div class="kpi-value">${rows.filter(e=>e.role==='店長').length}</div></div>
+      <div class="kpi-card"><div class="kpi-label">兼職人數</div><div class="kpi-value">${rows.filter(e=>e.role==='兼職店員').length}</div></div>
+    `;
+
+    const html = rows.map(e=>{
+      const shiftCells = DAYS.map(d=>{
+        const val = e.shifts[d];
+        const cls = val==='休'?'color:#c44e52':(val==='早'?'color:#2fb380':'color:#2d6cdf');
+        return `<td style="cursor:pointer;font-weight:700;${cls}" onclick="Staff.cycleShift('${e.id}','${d}')" title="點擊切換班別">${val}</td>`;
+      }).join('');
+      return `<tr><td>${App.storeName(e.store)}</td><td>${e.name}</td><td>${e.role}</td><td>${e.phone}</td>${shiftCells}
+        <td><span class="action-link danger" onclick="Staff.remove('${e.id}')">刪除</span></td></tr>`;
+    }).join('');
+    const dayHeaders = DAYS.map(d=>`<th>週${d}</th>`).join('');
+    document.getElementById('staff-table').innerHTML = `<thead><tr><th>門市</th><th>姓名</th><th>職稱</th><th>電話</th>${dayHeaders}<th>操作</th></tr></thead><tbody>${html||'<tr><td colspan="12">無資料</td></tr>'}</tbody>`;
+  },
+  cycleShift(empId,day){
+    const e = App.data.staff.find(x=>x.id===empId);
+    const idx = SHIFT_OPTS.indexOf(e.shifts[day]);
+    e.shifts[day] = SHIFT_OPTS[(idx+1)%SHIFT_OPTS.length];
+    App.save(); Staff.render();
+  },
+  remove(empId){
+    if(!confirm('確定刪除這位員工？')) return;
+    App.data.staff = App.data.staff.filter(e=>e.id!==empId);
+    App.save(); Staff.render();
+  },
+  openAdd(){
+    const storeOpts = App.data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+    const roleOpts = ['店長','副店長','正職店員','兼職店員'].map(r=>`<option value="${r}">${r}</option>`).join('');
+    App.openModal(`
+      <h3>新增員工</h3>
+      <div class="form-row"><label>門市</label><select id="m-store">${storeOpts}</select></div>
+      <div class="form-row"><label>姓名</label><input type="text" id="m-name" value="${genName()}"></div>
+      <div class="form-row"><label>職稱</label><select id="m-role">${roleOpts}</select></div>
+      <div class="form-row"><label>電話</label><input type="text" id="m-phone" value="09${randInt(10,99)}-${randInt(100,999)}-${randInt(100,999)}"></div>
+      <div class="modal-actions"><button class="btn outline" onclick="App.closeModal()">取消</button><button class="btn" onclick="Staff.save()">儲存</button></div>
+    `);
+  },
+  save(){
+    const store = document.getElementById('m-store').value;
+    const name = document.getElementById('m-name').value || genName();
+    const role = document.getElementById('m-role').value;
+    const phone = document.getElementById('m-phone').value;
+    const shifts={}; DAYS.forEach(d=>shifts[d]='休');
+    App.data.staff.push({id:'E'+Date.now(), store, name, role, phone, shifts});
+    App.save(); App.closeModal(); Staff.render();
+  }
+};
+
+/* ============ FINANCE ============ */
+const Finance = {
+  render(){
+    const rows = App.data.stores.map(st=>{
+      const storeSales = App.data.sales.filter(s=>s.store===st.id && inTrailing12(s.month));
+      const revenue = storeSales.reduce((sum,s)=>sum+salesRevenue(s),0);
+      const cogs = storeSales.reduce((sum,s)=>sum+salesCost(s),0);
+      const rentAnnualized = st.rent*12;
+      const grossProfit = revenue - cogs;
+      const netProfit = grossProfit - rentAnnualized;
+      const margin = revenue>0 ? (netProfit/revenue*100) : 0;
+      return {store:st, revenue, cogs, grossProfit, rent:rentAnnualized, netProfit, margin};
+    });
+
+    const totalRevenue = rows.reduce((s,r)=>s+r.revenue,0);
+    const totalNet = rows.reduce((s,r)=>s+r.netProfit,0);
+    const avgMargin = totalRevenue>0 ? totalNet/totalRevenue*100 : 0;
+    const bestStore = [...rows].sort((a,b)=>b.margin-a.margin)[0];
+
+    document.getElementById('fin-kpis').innerHTML = `
+      <div class="kpi-card"><div class="kpi-label">全連鎖總營收</div><div class="kpi-value">${fmtCurrency(totalRevenue)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">全連鎖淨利</div><div class="kpi-value" style="color:${totalNet>=0?'var(--positive)':'var(--negative)'}">${fmtCurrency(totalNet)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">平均淨利率</div><div class="kpi-value">${fmtPct(avgMargin)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">最佳門市</div><div class="kpi-value" style="font-size:18px">${bestStore?bestStore.store.name:'-'}</div><div class="kpi-change positive">${bestStore?fmtPct(bestStore.margin)+' 淨利率':''}</div></div>
+    `;
+
+    const sortedByMargin = [...rows].sort((a,b)=>b.margin-a.margin);
+    chartUpsert('fin-margin-chart','bar',{
+      labels: sortedByMargin.map(r=>r.store.name),
+      datasets:[{label:'淨利率(%)',data:sortedByMargin.map(r=>r.margin.toFixed(1)),backgroundColor:sortedByMargin.map(r=>r.margin>=0?COLORS[2]+'CC':COLORS[3]+'CC'),borderRadius:4}]
+    },{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+'%'}}}});
+
+    chartUpsert('fin-rev-cost-chart','bar',{
+      labels: rows.map(r=>r.store.name),
+      datasets:[
+        {label:'營收',data:rows.map(r=>r.revenue),backgroundColor:COLORS[1]+'CC',borderRadius:4},
+        {label:'總成本(COGS+房租)',data:rows.map(r=>r.cogs+r.rent),backgroundColor:COLORS[3]+'CC',borderRadius:4}
+      ]
+    },{scales:{y:{ticks:{callback:v=>fmtCurrency(v)}}}});
+
+    const html = rows.map(r=>`<tr>
+      <td>${r.store.name}</td>
+      <td>${fmtCurrencyFull(r.revenue)}</td>
+      <td>${fmtCurrencyFull(r.cogs)}</td>
+      <td>${fmtCurrencyFull(r.grossProfit)}</td>
+      <td><input type="number" style="width:100px;padding:4px 6px;border:1px solid #d8dbe0;border-radius:4px" value="${r.store.rent}" onchange="Finance.updateRent('${r.store.id}',this.value)"> /月</td>
+      <td style="color:${r.netProfit>=0?'var(--positive)':'var(--negative)'};font-weight:700">${fmtCurrencyFull(r.netProfit)}</td>
+      <td>${fmtPct(r.margin)}</td>
+    </tr>`).join('');
+    document.getElementById('fin-table').innerHTML = `<thead><tr><th>門市</th><th>營收</th><th>銷貨成本</th><th>毛利</th><th>月租金(可編輯)</th><th>年度淨利</th><th>淨利率</th></tr></thead><tbody>${html}</tbody>`;
+  },
+  updateRent(storeId,val){
+    const st = App.data.stores.find(s=>s.id===storeId);
+    st.rent = parseFloat(val)||0;
+    App.save(); Finance.render();
+  }
+};
+
+/* ============ BRANDS ============ */
+const Brands = {
+  render(){
+    const storeF = document.getElementById('brand-filter-store').value || 'all';
+    const map = brandTotals(storeF);
+    const sorted = [...App.data.brands].sort((a,b)=>map[b].revenue-map[a].revenue);
+
+    chartUpsert('brand-revenue-chart','bar',{
+      labels: sorted,
+      datasets:[{label:'營收',data:sorted.map(b=>map[b].revenue),backgroundColor:COLORS.map(c=>c+'CC'),borderRadius:4}]
+    },{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>fmtCurrency(v)}}}});
+
+    chartUpsert('brand-units-chart','doughnut',{
+      labels: sorted,
+      datasets:[{data:sorted.map(b=>map[b].units),backgroundColor:COLORS.map(c=>c+'CC')}]
+    },{plugins:{legend:{position:'right'}}});
+
+    const totalRev = sorted.reduce((s,b)=>s+map[b].revenue,0);
+    const html = sorted.map(b=>`<tr><td>${b}</td><td>${fmtNum(map[b].units)}</td><td>${fmtCurrencyFull(map[b].revenue)}</td><td>${totalRev>0?fmtPct(map[b].revenue/totalRev*100):'0%'}</td></tr>`).join('');
+    document.getElementById('brand-table').innerHTML = `<thead><tr><th>品牌</th><th>銷售件數</th><th>營收</th><th>營收佔比</th></tr></thead><tbody>${html}</tbody>`;
+  }
+};
+
+/* ============ BETA ANALYSIS ============ */
+const Beta = {
+  init(){ this.onScopeChange(); },
+  onScopeChange(){
+    const scope = document.getElementById('beta-scope').value;
+    const sel = document.getElementById('beta-detail-entity');
+    sel.innerHTML = scope==='store'
+      ? App.data.stores.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')
+      : App.data.brands.map(b=>`<option value="${b}">${b}</option>`).join('');
+    this.render();
+  },
+  classify(beta){
+    if(beta>=1.2) return {label:'高敏感(積極型)', cls:'beta-high'};
+    if(beta<0.8) return {label:'穩健(防禦型)', cls:'beta-low'};
+    return {label:'中等(跟隨大盤)', cls:'beta-mid'};
+  },
+  computeAll(){
+    const scope = document.getElementById('beta-scope').value;
+    const grandTotal = storeMonthlyRevenue('all', MONTHS); // 全連鎖每月總營收（含所有門市與品牌）
+    const entities = scope==='store'
+      ? App.data.stores.map(s=>({id:s.id,label:s.name}))
+      : App.data.brands.map(b=>({id:b,label:b}));
+    return entities.map(e=>{
+      const series = scope==='store' ? storeMonthlyRevenue(e.id, MONTHS) : brandMonthlyRevenueSeries(e.id, MONTHS);
+      const benchmark = grandTotal.map((v,i)=>v-series[i]); // 排除自己的大盤基準，避免自我相關
+      const {xs,ys} = pairedGrowthRates(series, benchmark);
+      const reg = regressXY(xs,ys);
+      return {id:e.id, label:e.label, series, benchmark, xs, ys, ...reg};
+    });
+  },
+  render(){
+    const scope = document.getElementById('beta-scope').value;
+    const scopeLabel = scope==='store' ? '門市' : '品牌';
+    const results = this.computeAll();
+    if(results.length===0) return;
+    const sorted = [...results].sort((a,b)=>b.beta-a.beta);
+
+    const avgBeta = results.reduce((s,r)=>s+r.beta,0)/results.length;
+    const avgR2 = results.reduce((s,r)=>s+r.r2,0)/results.length;
+    const highest = sorted[0], lowest = sorted[sorted.length-1];
+    document.getElementById('beta-kpis').innerHTML = `
+      <div class="kpi-card"><div class="kpi-label">平均 Beta</div><div class="kpi-value">${avgBeta.toFixed(2)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">最高 Beta ${scopeLabel}</div><div class="kpi-value" style="font-size:18px">${highest.label}</div><div class="kpi-change negative">Beta ${highest.beta.toFixed(2)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">最低 Beta ${scopeLabel}</div><div class="kpi-value" style="font-size:18px">${lowest.label}</div><div class="kpi-change positive">Beta ${lowest.beta.toFixed(2)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">平均 R²（解釋力）</div><div class="kpi-value">${avgR2.toFixed(2)}</div></div>
+    `;
+
+    document.getElementById('beta-rank-title').textContent = `各${scopeLabel} Beta 排名`;
+    chartUpsert('beta-rank-chart','bar',{
+      labels: sorted.map(r=>r.label),
+      datasets:[{label:'Beta',data:sorted.map(r=>Number(r.beta.toFixed(2))),backgroundColor:sorted.map(r=>r.beta>=1.2?COLORS[3]+'CC':(r.beta<0.8?COLORS[2]+'CC':COLORS[1]+'CC')),borderRadius:4}]
+    },{indexAxis:'y',plugins:{legend:{display:false}}});
+
+    const detailSel = document.getElementById('beta-detail-entity');
+    if(!detailSel.value){ detailSel.value = results[0].id; }
+    const detail = results.find(r=>r.id===detailSel.value) || results[0];
+    document.getElementById('beta-scatter-title').textContent = `${detail.label} vs 大盤基準（特徵線）`;
+    const scatterPoints = detail.xs.map((x,i)=>({x:Number((x*100).toFixed(2)), y:Number((detail.ys[i]*100).toFixed(2))}));
+    const xMin = Math.min(...detail.xs,0), xMax = Math.max(...detail.xs,0);
+    const linePoints = [
+      {x:Number((xMin*100).toFixed(2)), y:Number(((detail.alpha+detail.beta*xMin)*100).toFixed(2))},
+      {x:Number((xMax*100).toFixed(2)), y:Number(((detail.alpha+detail.beta*xMax)*100).toFixed(2))}
+    ];
+    chartUpsert('beta-scatter-chart','scatter',{
+      datasets:[
+        {label:'月觀測值', data:scatterPoints, backgroundColor:COLORS[1]+'CC', pointRadius:4},
+        {label:'迴歸線(Beta='+detail.beta.toFixed(2)+')', data:linePoints, showLine:true, borderColor:COLORS[0], borderWidth:2, pointRadius:0, fill:false}
+      ]
+    },{scales:{x:{title:{display:true,text:'大盤基準月成長率(%)'}},y:{title:{display:true,text:'月成長率(%)'}}},plugins:{tooltip:{callbacks:{label:c=>c.parsed.x.toFixed(1)+'% / '+c.parsed.y.toFixed(1)+'%'}}}});
+
+    const rows = sorted.map(r=>{
+      const cls = this.classify(r.beta);
+      return `<tr>
+        <td>${r.label}</td>
+        <td>${r.beta.toFixed(2)}</td>
+        <td>${(r.alpha*100).toFixed(2)}%</td>
+        <td>${r.r2.toFixed(2)}</td>
+        <td>${(r.stdevY*100).toFixed(1)}%</td>
+        <td><span class="badge ${cls.cls}">${cls.label}</span></td>
+        <td>${r.n}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('beta-table').innerHTML = `<thead><tr><th>${scopeLabel}</th><th>Beta</th><th>Alpha(月均超額成長)</th><th>R²</th><th>月成長波動度</th><th>分類</th><th>樣本數</th></tr></thead><tbody>${rows}</tbody>`;
+  }
+};
+
+/* ============ FORECAST ============ */
+const Forecast = {
+  render(){
+    const storeId = document.getElementById('forecast-store').value || App.data.stores[0].id;
+    if(!document.getElementById('forecast-store').value){ document.getElementById('forecast-store').value = storeId; }
+    const store = App.data.stores.find(s=>s.id===storeId);
+    document.getElementById('forecast-title').textContent = (store?store.name:'') + ' 營收預測';
+
+    const monthlyRevenue = storeMonthlyRevenue(storeId, TRAILING_12);
+    // simple linear regression y = a + bx
+    const n = monthlyRevenue.length;
+    const xs = monthlyRevenue.map((_,i)=>i);
+    const sumX = xs.reduce((a,b)=>a+b,0), sumY = monthlyRevenue.reduce((a,b)=>a+b,0);
+    const sumXY = xs.reduce((s,x,i)=>s+x*monthlyRevenue[i],0);
+    const sumX2 = xs.reduce((s,x)=>s+x*x,0);
+    const b = (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX || 1);
+    const a = (sumY - b*sumX)/n;
+
+    const futureLabels = [];
+    const lastDate = new Date(2026,6,1);
+    for(let i=1;i<=3;i++){ const d=new Date(lastDate.getFullYear(),lastDate.getMonth()+i,1); futureLabels.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+    const projected = [1,2,3].map(i=>Math.max(0,a+b*(n-1+i)));
+
+    const allLabels = [...TRAILING_12, ...futureLabels];
+    const actualData = [...monthlyRevenue, null,null,null];
+    const projectedData = [...Array(n-1).fill(null), monthlyRevenue[n-1], ...projected];
+
+    chartUpsert('forecast-chart','line',{
+      labels: allLabels,
+      datasets:[
+        {label:'實際營收',data:actualData,borderColor:COLORS[1],backgroundColor:COLORS[1]+'22',fill:true,tension:.25,spanGaps:false},
+        {label:'預測營收',data:projectedData,borderColor:COLORS[0],borderDash:[6,4],fill:false,tension:.25,pointStyle:'rectRot'}
+      ]
+    },{plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtCurrencyFull(c.parsed.y)}}},scales:{y:{ticks:{callback:v=>fmtCurrency(v)}}}});
+
+    const trendLabel = b>0 ? '成長趨勢' : (b<0?'下滑趨勢':'持平');
+    const rows = futureLabels.map((m,i)=>`<tr><td>${m}</td><td>${fmtCurrencyFull(projected[i])}</td><td>${trendLabel}</td></tr>`).join('');
+    document.getElementById('forecast-table').innerHTML = `<thead><tr><th>預測月份</th><th>預估營收</th><th>趨勢判斷</th></tr></thead><tbody>${rows}</tbody>`;
+  }
+};
+
+/* ============ PROCUREMENT (SKU-level purchase forecast) ============ */
+const Procurement = {
+  currentGenderColor: null,
+  onBrandChange(){
+    const brand = document.getElementById('proc-filter-brand').value;
+    const prodSel = document.getElementById('proc-filter-product');
+    const prods = App.data.products.filter(p=>p.brand===brand);
+    prodSel.innerHTML = '<option value="all">全部款式（合計）</option>' + prods.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    this.render();
+  },
+  scopeProducts(){
+    const brandSel = document.getElementById('proc-filter-brand');
+    if(!brandSel.value){ brandSel.value = App.data.brands[0]; this.onBrandChange(); }
+    const brand = brandSel.value || App.data.brands[0];
+    const prodSel = document.getElementById('proc-filter-product');
+    if(!prodSel.innerHTML){
+      const prods = App.data.products.filter(p=>p.brand===brand);
+      prodSel.innerHTML = '<option value="all">全部款式（合計）</option>' + prods.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    }
+    const productFilter = prodSel.value || 'all';
+    const all = App.data.products.filter(p=>p.brand===brand);
+    return productFilter==='all' ? all : all.filter(p=>p.id===productFilter);
+  },
+  monthlyUnitsForScope(products,months){
+    return months.map(m=>App.data.sales.filter(s=>s.month===m && products.some(p=>p.id===s.product)).reduce((sum,s)=>sum+s.units,0));
+  },
+  skuInventorySum(productId,gender,color,size){
+    const rec = App.skuRec(productId,gender,color,size);
+    return rec ? rec.qty : 0;
+  },
+  render(){
+    const products = this.scopeProducts();
+    const brand = document.getElementById('proc-filter-brand').value;
+    if(products.length===0){ return; }
+
+    const monthlyUnits = this.monthlyUnitsForScope(products, LAST6_MONTHS);
+    const reg = linearRegression(monthlyUnits);
+    const n = monthlyUnits.length;
+    const forecastNextMonthUnits = Math.max(0, Math.round(reg.predict(n)));
+
+    const last6Total = monthlyUnits.reduce((a,b)=>a+b,0);
+    const productShare = {};
+    products.forEach(p=>{
+      const pTotal = App.data.sales.filter(s=>s.product===p.id && LAST6_MONTHS.includes(s.month)).reduce((sum,s)=>sum+s.units,0);
+      productShare[p.id] = last6Total>0 ? pTotal/last6Total : 1/products.length;
+    });
+    const productForecastUnits = {};
+    products.forEach(p=>{ productForecastUnits[p.id] = forecastNextMonthUnits*productShare[p.id]; });
+
+    // Matrix: gender x color -> {forecast, inventory, order}
+    const matrix = {};
+    GENDERS.forEach(g=>{
+      matrix[g.code] = {};
+      SKU_COLORS.forEach(c=>{
+        let forecast=0, inventory=0;
+        products.forEach(p=>{
+          const gShare = p.genderSplit[g.code]||0;
+          const cShare = p.colorSplit[c]||0;
+          forecast += productForecastUnits[p.id]*gShare*cShare;
+          SIZE_PROFILE[g.code].sizes.forEach(size=>{ inventory += this.skuInventorySum(p.id,g.code,c,size); });
+        });
+        const order = Math.max(0, Math.round(forecast-inventory));
+        matrix[g.code][c] = {forecast, inventory, order};
+      });
+    });
+
+    const totalInventory = GENDERS.reduce((s,g)=>s+SKU_COLORS.reduce((s2,c)=>s2+matrix[g.code][c].inventory,0),0);
+    const totalOrderBottomUp = GENDERS.reduce((s,g)=>s+SKU_COLORS.reduce((s2,c)=>s2+matrix[g.code][c].order,0),0);
+    const trendLabel = reg.b>0.5 ? '成長趨勢' : (reg.b<-0.5 ? '下滑趨勢' : '持平');
+    const avgMonthly = last6Total/6;
+
+    document.getElementById('proc-kpis').innerHTML = `
+      <div class="kpi-card"><div class="kpi-label">近6個月銷售件數</div><div class="kpi-value">${fmtNum(last6Total)}</div><div class="kpi-change neutral">月均 ${fmtNum(avgMonthly)} 件</div></div>
+      <div class="kpi-card"><div class="kpi-label">下月預測銷售件數</div><div class="kpi-value">${fmtNum(forecastNextMonthUnits)}</div><div class="kpi-change ${reg.b>0.5?'positive':(reg.b<-0.5?'negative':'neutral')}">${trendLabel}</div></div>
+      <div class="kpi-card"><div class="kpi-label">目前全連鎖庫存（10店合計）</div><div class="kpi-value">${fmtNum(totalInventory)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">建議進貨總量</div><div class="kpi-value" style="color:var(--accent)">${fmtNum(totalOrderBottomUp)}</div><div class="kpi-change neutral">依尺寸/性別/顏色明細加總</div></div>
+    `;
+
+    document.getElementById('proc-trend-title').textContent = brand + (products.length===1?(' '+products[0].name):'（全款式合計）') + ' 近6個月銷售件數趨勢 + 下月預測';
+    const futureMonth = (()=>{ const last=new Date(2026,6,1); const d=new Date(last.getFullYear(),last.getMonth()+1,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); })();
+    const allLabels = [...LAST6_MONTHS, futureMonth];
+    const actualData = [...monthlyUnits, null];
+    const projectedData = [...Array(n-1).fill(null), monthlyUnits[n-1], forecastNextMonthUnits];
+    chartUpsert('proc-trend-chart','line',{
+      labels: allLabels,
+      datasets:[
+        {label:'實際銷售件數',data:actualData,borderColor:COLORS[1],backgroundColor:COLORS[1]+'22',fill:true,tension:.25},
+        {label:'預測銷售件數',data:projectedData,borderColor:COLORS[0],borderDash:[6,4],fill:false,tension:.25,pointStyle:'rectRot'}
+      ]
+    },{plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)+' 件'}}}});
+
+    chartUpsert('proc-matrix-chart','bar',{
+      labels: SKU_COLORS,
+      datasets: GENDERS.map((g,i)=>({label:g.label,data:SKU_COLORS.map(c=>matrix[g.code][c].order),backgroundColor:COLORS[i]+'CC',borderRadius:4}))
+    },{plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': 建議進貨 '+fmtNum(c.parsed.y)+' 件'}}}});
+
+    const rows = [];
+    GENDERS.forEach(g=>{
+      SKU_COLORS.forEach(c=>{
+        const m = matrix[g.code][c];
+        const orderClass = m.order>0 ? 'pos' : 'zero';
+        rows.push(`<tr>
+          <td>${g.label}</td><td>${c}</td>
+          <td>${fmtNum(m.forecast)}</td>
+          <td>${fmtNum(m.inventory)}</td>
+          <td class="mx-cell" onclick="Procurement.openSizeDetail('${g.code}','${c}')"><span class="mx-order ${orderClass}">${fmtNum(m.order)}</span> <span class="action-link">尺寸明細 →</span></td>
+        </tr>`);
+      });
+    });
+    document.getElementById('proc-matrix-table').innerHTML = `<thead><tr><th>性別/年齡</th><th>顏色</th><th>下月預測需求</th><th>目前庫存(10店合計)</th><th>建議進貨量</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+  },
+  openSizeDetail(gender,color){
+    const products = this.scopeProducts();
+    const brand = document.getElementById('proc-filter-brand').value;
+    const monthlyUnits = this.monthlyUnitsForScope(products, LAST6_MONTHS);
+    const reg = linearRegression(monthlyUnits);
+    const n = monthlyUnits.length;
+    const forecastNextMonthUnits = Math.max(0, Math.round(reg.predict(n)));
+    const last6Total = monthlyUnits.reduce((a,b)=>a+b,0);
+    const productShare = {};
+    products.forEach(p=>{
+      const pTotal = App.data.sales.filter(s=>s.product===p.id && LAST6_MONTHS.includes(s.month)).reduce((sum,s)=>sum+s.units,0);
+      productShare[p.id] = last6Total>0 ? pTotal/last6Total : 1/products.length;
+    });
+
+    const sizeProfile = SIZE_PROFILE[gender];
+    let rows='';
+    products.forEach(p=>{
+      const productForecast = forecastNextMonthUnits*productShare[p.id];
+      const gShare = p.genderSplit[gender]||0;
+      const cShare = p.colorSplit[color]||0;
+      sizeProfile.sizes.forEach((size,sIdx)=>{
+        const sShare = sizeProfile.weights[sIdx];
+        const forecast = productForecast*gShare*cShare*sShare;
+        const inv = this.skuInventorySum(p.id,gender,color,size);
+        const order = Math.max(0, Math.round(forecast-inv));
+        rows += `<tr>
+          <td>${products.length>1?p.name:''}</td>
+          <td>${size}</td>
+          <td>${fmtNum(forecast)}</td>
+          <td><input type="number" class="editable-num" value="${inv}" min="0" onchange="Procurement.updateSkuQty('${p.id}','${gender}','${color}',${size},this.value)"></td>
+          <td><span class="mx-order ${order>0?'pos':'zero'}">${fmtNum(order)}</span></td>
+        </tr>`;
+      });
+    });
+
+    App.openModal(`
+      <h3>${brand} · ${genderLabel(gender)} · ${color} 尺寸明細</h3>
+      <div class="hint">庫存欄位可直接編輯（單位：全連鎖10店合計）</div>
+      <div class="table-wrap"><table class="data" style="font-size:12.5px">
+        <thead><tr>${products.length>1?'<th>款式</th>':''}<th>尺寸</th><th>下月預測</th><th>目前庫存</th><th>建議進貨</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+      <div class="modal-actions"><button class="btn outline" onclick="App.closeModal()">關閉</button></div>
+    `);
+    document.getElementById('modal-body').classList.add('wide');
+  },
+  updateSkuQty(productId,gender,color,size,val){
+    App.setSkuQty(productId,gender,color,size,parseInt(val)||0);
+    this.render();
+    this.openSizeDetail(gender,color);
+  }
+};
+
+/* ============ Chart helper (create or update) ============ */
+const chartRegistry = {};
+function chartUpsert(canvasId,type,data,options){
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  if(chartRegistry[canvasId]){
+    chartRegistry[canvasId].data = data;
+    chartRegistry[canvasId].options = Object.assign({responsive:true,maintainAspectRatio:false},options||{});
+    chartRegistry[canvasId].update('none');
+  } else {
+    chartRegistry[canvasId] = new Chart(ctx,{type,data,options:Object.assign({responsive:true,maintainAspectRatio:false},options||{})});
+  }
+}
+
+/* ============ Init ============ */
+document.addEventListener('DOMContentLoaded',()=>App.init());
+document.getElementById('modal-overlay').addEventListener('click',e=>{ if(e.target.id==='modal-overlay') App.closeModal(); });
+</script>
+</body>
+</html>
