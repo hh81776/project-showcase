@@ -1,6 +1,14 @@
 [
   {
     "date": "2026-08-29",
+    "title": "台股盤勢與籌碼技術面總體檢視",
+    "description": "每個交易日收盤後自動更新的台股大盤日報：現貨市場漲跌與三大法人（外資、投信、自營商）買賣超動向、5/46/60/120/240 日均線與扣抵值助漲助跌結構、期貨未平倉與選擇權 P/C 比籌碼情緒分析，最後附整體總結與操作建議。所有數據皆標明來源與資料日期，官方資料未更新時會明確註記「資料未取得」而非自行推估。僅供研究參考，不構成投資建議。",
+    "link": "https://hh81776.github.io/stock_everday/",
+    "type": "html",
+    "tag": "HTML App"
+  },
+  {
+    "date": "2026-08-29",
     "title": "StockAI 股票分析 Dashboard",
     "description": "輸入任意股票代碼（美股或台股，如 NVDA、AAPL、TSLA、2330.TW、TSM），結合即時股價與 Claude AI 深度分析，產生完整財務、技術面、競爭分析報告；內建 FTAI、NVDA、AAPL、TSLA、MSFT、META、AMZN、2330.TW、TSM 等快速選項。AI 分析功能需自行輸入 Anthropic API Key，金鑰僅存於瀏覽器本機、不會傳送到外部伺服器。僅供研究參考，不構成投資建議。",
     "link": "https://hh81776.github.io/stockai-dashboard/",
